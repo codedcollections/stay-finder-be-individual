@@ -22,7 +22,7 @@ properties.get("/", async (c) => {
   try {
     const properties = await getProperties({
       maxPrice: Number(c.req.query("maxprice")) || undefined,
-      location: c.req.query("location"),
+      city: c.req.query("city"),
       maxGuests: Number(c.req.query("maxguests")) || undefined,
     });
     return c.json(properties);
@@ -41,7 +41,7 @@ properties.get("/kind/:kind", propertyParamValidator, async (c) => {
   try {
     const properties = await getPropertiesByKind(kind, {
       maxPrice: Number(c.req.query("maxprice")) || undefined,
-      location: c.req.query("location"),
+      city: c.req.query("city"),
       maxGuests: Number(c.req.query("maxguests")) || undefined,
     })
     return c.json(properties)

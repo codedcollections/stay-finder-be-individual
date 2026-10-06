@@ -11,7 +11,8 @@ const SELECT_QUERY_LIST: PropertyValidKey[] = [
   "property_id",
   "title",
   "description",
-  "location",
+  "city",
+  "country",
   "price_per_night",
   "max_guests",
   "kind",
@@ -24,7 +25,7 @@ const QUERY_KIND = "kind";
 
 type PropertyListFilter = Partial<{
   maxPrice: number;
-  location: string;
+  city: string;
   maxGuests: number;
 }>;
 
@@ -40,8 +41,8 @@ function buildPropertiesFilter(
     query = query.lte("max_guests", filters.maxGuests);
   }
 
-  if (filters.location && filters.location.trim().length > 2) {
-    query = query.ilike("location", `%${filters.location}%`);
+  if (filters.city && filters.city.trim().length > 2) {
+    query = query.ilike("city", `%${filters.city}%`);
   }
 }
 

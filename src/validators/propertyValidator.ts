@@ -9,7 +9,8 @@ const propertySchema = z.object({
   price_per_night: z
     .number()
     .min(100, "Price per night needs to be a minimum of 100"),
-  location: z.string().min(2, "Location is nececary"),
+  city: z.string().min(1, "City is required"),
+  country: z.string().min(1, "Country is required"),
   kind: z.enum<PropertyKind[]>(
     ["apartment", "villa"],
     `Must be one of "apartment", "villa"`,

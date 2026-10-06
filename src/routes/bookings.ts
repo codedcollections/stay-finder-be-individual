@@ -17,6 +17,7 @@ const FOREIGN_KEY_VIOLATION = "23503";
 const bookings = new Hono({ strict: false });
 
 // Lista alla bookings för en Property
+//http://localhost:3000/bookings/efkelefnaljekl-efae-11e12ed1-d1ed12d1d
 bookings.get("/properties/:propertyId", async (c) => {
   const propertyId = c.req.param("propertyId");
   try {

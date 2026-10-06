@@ -3,7 +3,8 @@ type PropertyKind = "apartment" | "villa";
 interface Property {
   title: string;
   description: string;
-  location: string;
+  city: string;
+  country: string;
   price_per_night: number;
   max_guests: number;
   property_id: string
