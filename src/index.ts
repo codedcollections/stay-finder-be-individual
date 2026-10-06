@@ -20,6 +20,7 @@ app.get('/', (c) => {
   })
 })
 
+//test comment
 app.route("/properties",properties)
 app.route("/bookings",bookings)
 app.route("/auth",auth)
