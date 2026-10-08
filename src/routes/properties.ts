@@ -14,6 +14,7 @@ import {
   updatePropertyById,
 } from "../database/properties.js";
 import { requireAuth } from "../middleware/auth.js";
+import type { User } from "@supabase/supabase-js";
 
 const properties = new Hono({ strict: false });
 
@@ -69,8 +70,12 @@ properties.get("/:id", async (c) => {
 properties.post("/", requireAuth, propertyValidator, async (c) => {
   const propertyBody: NewProperty = c.req.valid("json");
   const sb = c.get("supabase");
+  const user = c.get("user") as User;
   try {
-    const property = await createProperty(sb, propertyBody);
+    const property = await createProperty(sb, {
+      ...propertyBody,
+      user_id: user.id
+    });
     return c.json(property, 201);
   } catch (e) {
     console.warn("error in inserting property into SB DB", e);
@@ -80,9 +85,10 @@ properties.post("/", requireAuth, propertyValidator, async (c) => {
 
 // Extra: "Updaterande" av en Property PUT/PATCH (för patch kolla Partial types)
 // om den finns tänk en blandning mellan GET + POST
-properties.patch("/:id", propertyOptionalValidator, async (c) => {
+properties.patch("/:id", requireAuth, propertyOptionalValidator, async (c) => {
   const propertyId = c.req.param("id");
-  const propertyBody: Partial<Property> = c.req.valid("json");
+  let propertyBody: Partial<Property> = c.req.valid("json");
+  delete propertyBody.user_id
   const sb = c.get("supabase");
   try {
     const property = await updatePropertyById(sb, propertyId, propertyBody);
