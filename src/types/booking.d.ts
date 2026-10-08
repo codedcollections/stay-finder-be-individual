@@ -1,4 +1,4 @@
-interface Booking {
+type Booking = {
   booking_id: string;
   property_id: string;
   guest_name: string;

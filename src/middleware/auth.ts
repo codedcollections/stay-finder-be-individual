@@ -4,10 +4,10 @@ import { HTTPException } from "hono/http-exception";
 import { createServerClient } from "@supabase/ssr";
 
 import { env } from "../env.js";
-import type { BasicSupabaseClient } from "../types/supabase.js";
+import type { BasicSupabaseClient, Database } from "../types/supabase.js";
 
 function createSupabaseForRequest(c: Context): BasicSupabaseClient {
-  return createServerClient(env.supabaseUrl, env.supabaseKey, {
+  return createServerClient<Database>(env.supabaseUrl, env.supabaseKey, {
     cookies: {
       getAll() {
         const cookies = getCookie(c);
@@ -44,7 +44,7 @@ async function setSupabaseContext(c: Context): Promise<void> {
 
   const supabase = createSupabaseForRequest(c);
 
-  c.set("supabase", supabase as any);
+  c.set("supabase", supabase as BasicSupabaseClient);
 
   const {
     data: { user },

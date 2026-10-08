@@ -14,13 +14,13 @@ import {
   updatePropertyById,
 } from "../database/properties.js";
 import { requireAuth } from "../middleware/auth.js";
-import type { User } from "@supabase/supabase-js";
 
 const properties = new Hono({ strict: false });
 
 properties.get("/", async (c) => {
+  const sb = c.get("supabase");
   try {
-    const properties = await getProperties({
+    const properties = await getProperties(sb, {
       maxPrice: Number(c.req.query("maxprice")) || undefined,
       city: c.req.query("city"),
       maxGuests: Number(c.req.query("maxguests")) || undefined,
@@ -34,28 +34,30 @@ properties.get("/", async (c) => {
 
 // GET: properties either properties/kind/villa/ | properties/kind/appartment/
 // If not neither of those 400
-// Filter properties based on the kind 
+// Filter properties based on the kind
 // Extra add all previous search filtering from GET: properties
 properties.get("/kind/:kind", propertyParamValidator, async (c) => {
-  const kind = c.req.valid("param").kind
+  const kind = c.req.valid("param").kind;
+  const sb = c.get("supabase");
   try {
-    const properties = await getPropertiesByKind(kind, {
+    const properties = await getPropertiesByKind(sb, kind, {
       maxPrice: Number(c.req.query("maxprice")) || undefined,
       city: c.req.query("city"),
       maxGuests: Number(c.req.query("maxguests")) || undefined,
-    })
-    return c.json(properties)
+    });
+    return c.json(properties);
   } catch (e) {
     console.warn("Error in fetching properties from SB database", e);
-    return c.json([])
+    return c.json([]);
   }
-})
+});
 
 // individuell GET hämta en Property om den finns baserat på ID annars null 404
 properties.get("/:id", async (c) => {
   const propertyId = c.req.param("id");
+  const sb = c.get("supabase");
   try {
-    const property = await getPropertyById(propertyId);
+    const property = await getPropertyById(sb, propertyId);
     return c.json(property);
   } catch (e) {
     console.warn("Error in fetching property from SB database", e);
@@ -66,8 +68,9 @@ properties.get("/:id", async (c) => {
 // "Skpande" av en Propery POST genom en JSON body använd Postman eller thunderclient för detta
 properties.post("/", requireAuth, propertyValidator, async (c) => {
   const propertyBody: NewProperty = c.req.valid("json");
+  const sb = c.get("supabase");
   try {
-    const property = await createProperty(propertyBody);
+    const property = await createProperty(sb, propertyBody);
     return c.json(property, 201);
   } catch (e) {
     console.warn("error in inserting property into SB DB", e);
@@ -80,8 +83,9 @@ properties.post("/", requireAuth, propertyValidator, async (c) => {
 properties.patch("/:id", propertyOptionalValidator, async (c) => {
   const propertyId = c.req.param("id");
   const propertyBody: Partial<Property> = c.req.valid("json");
+  const sb = c.get("supabase");
   try {
-    const property = await updatePropertyById(propertyId, propertyBody);
+    const property = await updatePropertyById(sb, propertyId, propertyBody);
     return c.json(property);
   } catch (e) {
     console.log("Error updating property in SB DB", e);
@@ -92,8 +96,9 @@ properties.patch("/:id", propertyOptionalValidator, async (c) => {
 // Extra: "bortagning" av en Property DELETE om den finns tänk en GET som sedan tar bort 200/204
 properties.delete("/:id", async (c) => {
   const propertyId = c.req.param("id");
+  const sb = c.get("supabase");
   try {
-    await deletePropertyById(propertyId);
+    await deletePropertyById(sb, propertyId);
     return c.json(null, 200);
   } catch (e) {
     console.warn("Error in deleting property", e);

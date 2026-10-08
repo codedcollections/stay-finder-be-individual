@@ -1,6 +1,6 @@
 type PropertyKind = "apartment" | "villa";
 
-interface Property {
+type Property = {
   title: string;
   description: string;
   city: string;
