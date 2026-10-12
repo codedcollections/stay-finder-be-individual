@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -25,7 +25,6 @@ export type Database = {
           guests: number
           property_id: string
           status: string
-          user_id: string
         }
         Insert: {
           booking_id?: string
@@ -37,7 +36,6 @@ export type Database = {
           guests: number
           property_id: string
           status?: string
-          user_id: string
         }
         Update: {
           booking_id?: string
@@ -49,7 +47,6 @@ export type Database = {
           guests?: number
           property_id?: string
           status?: string
-          user_id?: string
         }
         Relationships: [
           {
@@ -61,113 +58,42 @@ export type Database = {
           },
         ]
       }
-      books: {
-        Row: {
-          author: string
-          book_id: number
-          copies: number
-          created_at: string
-          description: string
-          genre: string
-          published_year: number
-          title: string
-        }
-        Insert: {
-          author: string
-          book_id?: number
-          copies: number
-          created_at?: string
-          description: string
-          genre: string
-          published_year: number
-          title: string
-        }
-        Update: {
-          author?: string
-          book_id?: number
-          copies?: number
-          created_at?: string
-          description?: string
-          genre?: string
-          published_year?: number
-          title?: string
-        }
-        Relationships: []
-      }
-      loans: {
-        Row: {
-          book_id: number
-          borrower_email: string
-          borrower_name: string
-          created_at: string
-          due_date: string
-          loan_date: string
-          loan_id: number
-          status: string
-        }
-        Insert: {
-          book_id: number
-          borrower_email: string
-          borrower_name: string
-          created_at?: string
-          due_date: string
-          loan_date: string
-          loan_id?: number
-          status?: string
-        }
-        Update: {
-          book_id?: number
-          borrower_email?: string
-          borrower_name?: string
-          created_at?: string
-          due_date?: string
-          loan_date?: string
-          loan_id?: number
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loans_book_id_fkey"
-            columns: ["book_id"]
-            isOneToOne: false
-            referencedRelation: "books"
-            referencedColumns: ["book_id"]
-          },
-        ]
-      }
       properties: {
         Row: {
+          city: string
+          country: string
           created_at: string
           description: string
           kind: string
-          location: string
           max_guests: number
           price_per_night: number
           property_id: string
           title: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          city?: string
+          country?: string
           created_at?: string
           description: string
           kind?: string
-          location: string
           max_guests: number
           price_per_night: number
           property_id?: string
           title: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          city?: string
+          country?: string
           created_at?: string
           description?: string
           kind?: string
-          location?: string
           max_guests?: number
           price_per_night?: number
           property_id?: string
           title?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
