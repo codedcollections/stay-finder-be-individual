@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import type { PostgrestError } from "@supabase/supabase-js";
+import type { PostgrestError, User } from "@supabase/supabase-js";
 
 import {
   bookingOptionalValidator,
@@ -11,6 +11,7 @@ import {
   getBookingsByPropertyId,
   updateBooking,
 } from "../database/bookings.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const FOREIGN_KEY_VIOLATION = "23503";
 
@@ -30,11 +31,17 @@ bookings.get("/properties/:propertyId", async (c) => {
 });
 
 // Skapa en Booking för en Property, property_id tas från URL:en
-bookings.post("/properties/:propertyId", bookingValidator, async (c) => {
+bookings.post("/properties/:propertyId", bookingValidator, requireAuth, async (c) => {
   const propertyId = c.req.param("propertyId");
-  const bookingBody: BookingBody = c.req.valid("json");
+  const bookingBody = c.req.valid("json");
+  const sb = c.get("supabase")
+  const user = c.get("user") as User
   try {
-    const booking = await createBooking(propertyId, bookingBody);
+    const booking = await createBooking(sb, {
+      ...bookingBody,
+      property_id: propertyId,
+      user_id: user.id
+    });
     return c.json(booking, 201);
   } catch (e) {
     console.warn("Error in inserting booking into SB DB", e);
@@ -52,7 +59,7 @@ bookings.patch(
   async (c) => {
     const propertyId = c.req.param("propertyId");
     const bookingId = c.req.param("bookingId");
-    const bookingBody: Partial<BookingBody> = c.req.valid("json");
+    const bookingBody = c.req.valid("json");
     try {
       const booking = await updateBooking(propertyId, bookingId, bookingBody);
       return c.json(booking);

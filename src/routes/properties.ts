@@ -14,7 +14,9 @@ import {
   updatePropertyById,
 } from "../database/properties.js";
 import { requireAuth } from "../middleware/auth.js";
+
 import type { User } from "@supabase/supabase-js";
+import type { Property } from "../types/property.js";
 
 const properties = new Hono({ strict: false });
 
@@ -68,7 +70,7 @@ properties.get("/:id", async (c) => {
 
 // "Skpande" av en Propery POST genom en JSON body använd Postman eller thunderclient för detta
 properties.post("/", requireAuth, propertyValidator, async (c) => {
-  const propertyBody: NewProperty = c.req.valid("json");
+  const propertyBody = c.req.valid("json");
   const sb = c.get("supabase");
   const user = c.get("user") as User;
   try {

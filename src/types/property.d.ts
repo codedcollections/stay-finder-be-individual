@@ -1,20 +1,17 @@
-type PropertyKind = "apartment" | "villa";
+import type { Database } from "./database.types.js";
 
-type Property = {
+export type PropertyKind = "apartment" | "villa";
+
+export type Property = Database["public"]["Tables"]["properties"]["Row"];
+
+type PropertyInsert = Database["public"]["Tables"]["properties"]["Insert"];
+
+export type NewProperty = Omit<
+  PropertyInsert,
+  "user_id" | "property_id" | "created_at" | "kind"
+> & {
   user_id: string;
-  title: string;
-  description: string;
-  city: string;
-  country: string;
-  price_per_night: number;
-  max_guests: number;
-  property_id: string
   kind: PropertyKind;
-  created_at: string;
-}
+};
 
-type NewProperty = Omit<Property, "property_id" | "created_at" | "user_id"> & {
-  user_id?: string;
-}
-
-type PropertyValidKey = keyof Property
+export type PropertyValidKey = keyof Property;

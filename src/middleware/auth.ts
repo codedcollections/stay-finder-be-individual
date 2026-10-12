@@ -4,7 +4,8 @@ import { HTTPException } from "hono/http-exception";
 import { createServerClient } from "@supabase/ssr";
 
 import { env } from "../env.js";
-import type { BasicSupabaseClient, Database } from "../types/supabase.js";
+import type { BasicSupabaseClient } from "../types/supabase.js";
+import type { Database } from "../types/database.types.js";
 
 function createSupabaseForRequest(c: Context): BasicSupabaseClient {
   return createServerClient<Database>(env.supabaseUrl, env.supabaseKey, {

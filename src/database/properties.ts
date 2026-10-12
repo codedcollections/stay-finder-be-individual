@@ -1,6 +1,7 @@
 import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 
 import type { BasicSupabaseClient } from "../types/supabase.js";
+import type { NewProperty, Property, PropertyKind, PropertyValidKey } from "../types/property.js";
 
 const TABLE_NAME = "properties";
 
