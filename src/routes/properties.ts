@@ -76,7 +76,7 @@ properties.post("/", requireAuth, propertyValidator, async (c) => {
   try {
     const property = await createProperty(sb, {
       ...propertyBody,
-      user_id: "a42a611c-202e-4c76-a68e-bcbee5cc286b" //user.id
+      user_id: "0b4219f4-d04e-4254-a93b-7fd66ff24a07" //user.id
     });
     return c.json(property, 201);
   } catch (e) {
