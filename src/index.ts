@@ -11,10 +11,21 @@ import { env } from './env.js'
 
 const app = new Hono({ strict: false })
 
-app.use('*', cors({
+/* app.use('*', cors({
   origin: env.frontendUrl,
   credentials: true
 }))
+ */
+
+app.use(
+  "*",
+  cors({
+    origin: ["http://localhost:3001"], // Frontendens origin
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true, // ← Kritisk: tillåt cookies/Authorization över CORS
+  })
+);
 
 app.use(prettyJSON())
 

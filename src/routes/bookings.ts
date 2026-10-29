@@ -40,7 +40,7 @@ bookings.post("/properties/:propertyId", bookingValidator, requireAuth, async (c
     const booking = await createBooking(sb, {
       ...bookingBody,
       property_id: propertyId,
-      user_id: user.id
+      user_id: "0b4219f4-d04e-4254-a93b-7fd66ff24a07" //user.id
     });
     return c.json(booking, 201);
   } catch (e) {

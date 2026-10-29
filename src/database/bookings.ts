@@ -38,6 +38,23 @@ export async function getBookingsByPropertyId(
   throw error;
 }
 
+//get me info
+const QUERY_USER_ID = "user_id";
+export async function getBookingsByUserId(
+  userId: string,
+): Promise<Booking[]> {
+  const { error, data } = await sb
+    .from(TABLE_NAME)
+    .select(SELECT_QUERY)
+    .eq(QUERY_USER_ID, userId)
+    .order("check_in");
+
+  if (!error) {
+    return data as any as Booking[];
+  }
+  throw error;
+}
+
 export async function createBooking(
   sb: BasicSupabaseClient,
   bookingBody: NewBooking,
