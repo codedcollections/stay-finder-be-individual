@@ -67,6 +67,7 @@ export type Database = {
           country: string
           created_at: string
           description: string
+          image_url: string | null
           kind: string
           max_guests: number
           price_per_night: number
@@ -79,6 +80,7 @@ export type Database = {
           country?: string
           created_at?: string
           description: string
+          image_url?: string | null
           kind?: string
           max_guests: number
           price_per_night: number
@@ -91,6 +93,7 @@ export type Database = {
           country?: string
           created_at?: string
           description?: string
+          image_url?: string | null
           kind?: string
           max_guests?: number
           price_per_night?: number

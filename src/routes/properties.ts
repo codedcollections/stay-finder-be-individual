@@ -5,6 +5,7 @@ import {
   propertyParamValidator,
   propertyValidator,
 } from "../validators/propertyValidator.js";
+import propertyQueryValidator from "../validators/propertyQueryValidator.js";
 import {
   createProperty,
   deletePropertyById,
@@ -20,18 +21,23 @@ import type { Property } from "../types/property.js";
 
 const properties = new Hono({ strict: false });
 
-properties.get("/", async (c) => {
+properties.get("/", propertyQueryValidator, async (c) => {
+  const query = c.req.valid("query")
   const sb = c.get("supabase");
   try {
-    const properties = await getProperties(sb, {
-      maxPrice: Number(c.req.query("maxprice")) || undefined,
-      city: c.req.query("city"),
-      maxGuests: Number(c.req.query("maxguests")) || undefined,
-    });
+    const properties = await getProperties(sb, query);
     return c.json(properties);
-  } catch (e) {
-    console.warn("Error in fetching properties from SB database", e);
-    return c.json([]);
+  } catch (error) {
+    console.warn("Error in fetching properties from SB database", error);
+    return c.json(
+      {
+        data: [],
+        count: 0,
+        offset: query.offset,
+        limit: query.limit
+      },
+      500
+    );
   }
 });
 
@@ -39,19 +45,24 @@ properties.get("/", async (c) => {
 // If not neither of those 400
 // Filter properties based on the kind
 // Extra add all previous search filtering from GET: properties
-properties.get("/kind/:kind", propertyParamValidator, async (c) => {
+properties.get("/kind/:kind", propertyParamValidator, propertyQueryValidator, async (c) => {
+  const query = c.req.valid("query")
   const kind = c.req.valid("param").kind;
   const sb = c.get("supabase");
   try {
-    const properties = await getPropertiesByKind(sb, kind, {
-      maxPrice: Number(c.req.query("maxprice")) || undefined,
-      city: c.req.query("city"),
-      maxGuests: Number(c.req.query("maxguests")) || undefined,
-    });
+    const properties = await getPropertiesByKind(sb, kind, query);
     return c.json(properties);
-  } catch (e) {
-    console.warn("Error in fetching properties from SB database", e);
-    return c.json([]);
+  } catch (error) {
+    console.warn("Error in fetching properties from SB database", error);
+    return c.json(
+      {
+        data: [],
+        count: 0,
+        offset: query.offset,
+        limit: query.limit
+      },
+      500
+    );
   }
 });
 

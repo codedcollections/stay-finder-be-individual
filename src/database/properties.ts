@@ -1,9 +1,12 @@
 import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 
+import type { PaginatedListResponse } from "../types/global.js";
 import type { BasicSupabaseClient } from "../types/supabase.js";
-import type { NewProperty, Property, PropertyKind, PropertyValidKey } from "../types/property.js";
+import type { NewProperty, Property, PropertyKind, PropertyValidKey, PropertyListQuery } from "../types/property.js";
 
 const TABLE_NAME = "properties";
+const QUERY_ID = "property_id";
+const QUERY_KIND = "kind";
 
 const SELECT_QUERY_LIST: PropertyValidKey[] = [
   "property_id",
@@ -11,77 +14,118 @@ const SELECT_QUERY_LIST: PropertyValidKey[] = [
   "description",
   "city",
   "country",
+  "image_url",
   "price_per_night",
   "max_guests",
   "kind",
   "created_at",
   "user_id"
 ];
-
 const SELECT_QUERY = SELECT_QUERY_LIST.join(", ");
-const QUERY_ID = "property_id";
-const QUERY_KIND = "kind";
+
 
 function selectProperties(sb: BasicSupabaseClient) {
-  return sb.from(TABLE_NAME).select(SELECT_QUERY);
+  return sb.from(TABLE_NAME).select("*", { count: "exact" });
 }
 
-type PropertyListQuery = ReturnType<typeof selectProperties>;
-
-type PropertyListFilter = Partial<{
+/* type PropertyListFilter = Partial<{
   maxPrice: number;
   city: string;
   maxGuests: number;
-}>;
+}>; */
 
 function buildPropertiesFilter(
+  supabaseQuery: ReturnType<typeof selectProperties>,
   query: PropertyListQuery,
-  filters: PropertyListFilter,
 ) {
-  if (filters.maxPrice) {
-    query = query.lte("price_per_night", filters.maxPrice);
+  if (query.city?.trim()) {
+    supabaseQuery = supabaseQuery.eq("city", query.city.trim());
   }
 
-  if (filters.maxGuests) {
-    query = query.lte("max_guests", filters.maxGuests);
+  if (query.max_guests !== undefined) {
+    supabaseQuery = supabaseQuery.gte(
+      "max_guests",
+      query.max_guests,
+    );
   }
 
-  if (filters.city && filters.city.trim().length > 2) {
-    query = query.ilike("city", `%${filters.city}%`);
+  if (query.min_price !== undefined) {
+    supabaseQuery = supabaseQuery.gte(
+      "price_per_night",
+      query.min_price,
+    );
   }
+
+  if (query.max_price !== undefined) {
+    supabaseQuery = supabaseQuery.lte(
+      "price_per_night",
+      query.max_price,
+    );
+  }
+
+  if (query.q?.trim()) {
+    const searchPattern = `%${query.q.trim()}%`;
+
+    supabaseQuery = supabaseQuery.or(
+      `title.ilike.${searchPattern},description.ilike.${searchPattern},city.ilike.${searchPattern}`,
+    );
+  }
+
+  supabaseQuery = supabaseQuery.order(query.sort_by, {
+    ascending: query.sort_order === "asc",
+  });
+
+  const startIndex = query.offset;
+  const endIndex = startIndex + query.limit - 1;
+
+  return supabaseQuery.range(startIndex, endIndex);
 }
 
 export async function getProperties(
   sb: BasicSupabaseClient,
-  filters: PropertyListFilter,
-): Promise<Property[]> {
-  const query = selectProperties(sb);
+  query: PropertyListQuery,
+): Promise<PaginatedListResponse<Property>> {
+  const supabaseQuery = buildPropertiesFilter(
+    selectProperties(sb),
+    query,
+  );
 
-  buildPropertiesFilter(query, filters);
+  const { data, error, count } = await supabaseQuery;
 
-  const { error, data } = await query;
-
-  if (!error) {
-    return data as any as Property[];
+  if (error) {
+    throw new Error(error.message);
   }
-  throw error;
+
+  return {
+    data: data ?? [],
+    count: count ?? 0,
+    offset: query.offset,
+    limit: query.limit,
+  };
 }
 
 export async function getPropertiesByKind(
   sb: BasicSupabaseClient,
   kind: PropertyKind,
-  filters: PropertyListFilter,
-): Promise<Property[]> {
-  const query = selectProperties(sb).eq(QUERY_KIND, kind);
+  query: PropertyListQuery,
+): Promise<PaginatedListResponse<Property>> {
+  const supabaseQuery = buildPropertiesFilter(
+    selectProperties(sb).eq(QUERY_KIND, kind),
+    query,
+  );
 
-  buildPropertiesFilter(query, filters);
+  const { data, error, count } = await supabaseQuery;
 
-  const { error, data } = await query;
-
-  if (!error) {
-    return data as any as Property[];
+  if (error) {
+    throw new Error(error.message);
   }
-  throw error;
+
+  return {
+    data: data ?? [],
+    count: count ?? 0,
+    offset: query.offset,
+    limit: query.limit,
+  };
 }
 
 export async function getPropertyById(sb: BasicSupabaseClient, propertyId: string): Promise<Property> {
