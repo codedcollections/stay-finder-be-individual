@@ -20,7 +20,7 @@ const dateOrder = {
   path: ["check_in"],
 };
 
-const bookingSchema = bookingObject.refine(
+const bookingSchema = bookingObject.omit({ status: true }).refine(
   (data) => data.check_in <= data.check_out,
   dateOrder,
 );

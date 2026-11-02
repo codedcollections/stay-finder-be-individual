@@ -10,6 +10,7 @@ import {
   createProperty,
   deletePropertyById,
   getProperties,
+  getPropertiesByUserId,
   getPropertiesByKind,
   getPropertyById,
   updatePropertyById,
@@ -20,6 +21,22 @@ import type { User } from "@supabase/supabase-js";
 import type { Property } from "../types/property.js";
 
 const properties = new Hono({ strict: false });
+
+properties.get("/mine", requireAuth, propertyQueryValidator, async (c) => {
+  const user = c.get("user") as User;
+
+  try {
+    const properties = await getPropertiesByUserId(
+      user.id
+    );
+
+    return c.json(properties);
+  } catch (e) {
+    console.warn("Error fetching user's properties from SB database", e);
+    return c.json({ error: "Failed to fetch properties" }, 500);
+  }
+});
+
 
 properties.get("/", propertyQueryValidator, async (c) => {
   const query = c.req.valid("query")
@@ -65,6 +82,7 @@ properties.get("/kind/:kind", propertyParamValidator, propertyQueryValidator, as
     );
   }
 });
+
 
 // individuell GET hämta en Property om den finns baserat på ID annars null 404
 properties.get("/:id", async (c) => {

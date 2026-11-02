@@ -6,6 +6,7 @@ import {
   bookingValidator,
 } from "../validators/bookingValidator.js";
 import {
+  getBookingsByUserId,
   createBooking,
   deleteBooking,
   getBookingsByPropertyId,
@@ -16,6 +17,18 @@ import { requireAuth } from "../middleware/auth.js";
 const FOREIGN_KEY_VIOLATION = "23503";
 
 const bookings = new Hono({ strict: false });
+
+bookings.get("/mine", requireAuth, async (c) => {
+  const user = c.get("user") as User;
+
+  try {
+    const bookings = await getBookingsByUserId(user.id);
+    return c.json(bookings);
+  } catch (e) {
+    console.warn("Error fetching user's bookings from SB database", e);
+    return c.json({ error: "Failed to fetch bookings" }, 500);
+  }
+});
 
 // Lista alla bookings för en Property
 //http://localhost:3000/bookings/efkelefnaljekl-efae-11e12ed1-d1ed12d1d
@@ -40,7 +53,8 @@ bookings.post("/properties/:propertyId", bookingValidator, requireAuth, async (c
     const booking = await createBooking(sb, {
       ...bookingBody,
       property_id: propertyId,
-      user_id: "0b4219f4-d04e-4254-a93b-7fd66ff24a07" //user.id
+      user_id: user.id,
+      status: "pending",
     });
     return c.json(booking, 201);
   } catch (e) {

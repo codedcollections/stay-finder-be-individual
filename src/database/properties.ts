@@ -1,5 +1,6 @@
-import type { PostgrestSingleResponse } from "@supabase/supabase-js";
+import { sb } from "../lib/supabase.js";
 
+import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 import type { PaginatedListResponse } from "../types/global.js";
 import type { BasicSupabaseClient } from "../types/supabase.js";
 import type { NewProperty, Property, PropertyKind, PropertyValidKey, PropertyListQuery } from "../types/property.js";
@@ -102,6 +103,22 @@ export async function getProperties(
     offset: query.offset,
     limit: query.limit,
   };
+}
+
+const QUERY_USER_ID = "user_id";
+export async function getPropertiesByUserId(
+  userId: string,
+): Promise<Property[]> {
+  const { error, data } = await sb
+    .from(TABLE_NAME)
+    .select(SELECT_QUERY)
+    .eq(QUERY_USER_ID, userId)
+    .order("created_at", { ascending: false });
+
+  if (!error) {
+    return data as any as Property[];
+  }
+  throw error;
 }
 
 export async function getPropertiesByKind(
