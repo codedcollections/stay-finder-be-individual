@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import {
   propertyOptionalValidator,
+  propertyParamsValidator,
   propertyParamValidator,
   propertyValidator,
 } from "../validators/propertyValidator.js";
@@ -59,9 +60,6 @@ properties.get("/", propertyQueryValidator, async (c) => {
 });
 
 // GET: properties either properties/kind/villa/ | properties/kind/appartment/
-// If not neither of those 400
-// Filter properties based on the kind
-// Extra add all previous search filtering from GET: properties
 properties.get("/kind/:kind", propertyParamValidator, propertyQueryValidator, async (c) => {
   const query = c.req.valid("query")
   const kind = c.req.valid("param").kind;
@@ -121,8 +119,9 @@ properties.patch("/:id", requireAuth, propertyOptionalValidator, async (c) => {
   let propertyBody: Partial<Property> = c.req.valid("json");
   delete propertyBody.user_id
   const sb = c.get("supabase");
+  const user = c.get("user") as User
   try {
-    const property = await updatePropertyById(sb, propertyId, propertyBody);
+    const property = await updatePropertyById(sb, propertyId, user.id, propertyBody);
     return c.json(property);
   } catch (e) {
     console.log("Error updating property in SB DB", e);
@@ -131,11 +130,12 @@ properties.patch("/:id", requireAuth, propertyOptionalValidator, async (c) => {
 });
 
 // Extra: "bortagning" av en Property DELETE om den finns tänk en GET som sedan tar bort 200/204
-properties.delete("/:id", async (c) => {
+properties.delete("/:id", requireAuth, propertyParamsValidator, async (c) => {
   const propertyId = c.req.param("id");
+  const user = c.get("user") as User
   const sb = c.get("supabase");
   try {
-    await deletePropertyById(sb, propertyId);
+    await deletePropertyById(sb, propertyId, user.id);
     return c.json(null, 200);
   } catch (e) {
     console.warn("Error in deleting property", e);

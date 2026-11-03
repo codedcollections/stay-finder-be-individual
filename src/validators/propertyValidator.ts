@@ -21,6 +21,35 @@ const propertySchema = z.object({
   created_at: z.string().optional(),
 });
 
+const bookingParamsSchema = z.object({
+  propertyId: z.uuid(),
+  bookingId: z.uuid(),
+});
+
+export const bookingParamsValidator = zValidator(
+  "param",
+  bookingParamsSchema,
+  (result, c) => {
+    if (!result.success) {
+      return c.json(getValidatorError(result.error), 400);
+    }
+  },
+);
+
+const propertyParamsSchema = z.object({
+  id: z.uuid(),
+});
+
+export const propertyParamsValidator = zValidator(
+  "param",
+  propertyParamsSchema,
+  (result, c) => {
+    if (!result.success) {
+      return c.json(getValidatorError(result.error), 400);
+    }
+  },
+);
+
 const propertyOptionalSchema = propertySchema.partial();
 
 const propertyParamSchema = z.object({

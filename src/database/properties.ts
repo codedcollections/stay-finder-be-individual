@@ -174,12 +174,14 @@ export async function createProperty(sb: BasicSupabaseClient, propertyBody: NewP
 export async function updatePropertyById(
   sb: BasicSupabaseClient,
   propertyId: string,
+  userId: string,
   property: Partial<Property>,
 ): Promise<Property> {
   const { error, data }: PostgrestSingleResponse<Property> = await sb
     .from(TABLE_NAME)
     .update(property)
     .eq(QUERY_ID, propertyId)
+    .eq(QUERY_USER_ID, userId)
     .select()
     .single();
 
@@ -189,11 +191,12 @@ export async function updatePropertyById(
   throw error;
 }
 
-export async function deletePropertyById(sb: BasicSupabaseClient, propertyId: string) {
+export async function deletePropertyById(sb: BasicSupabaseClient, propertyId: string, userId: string) {
   const { error }: PostgrestSingleResponse<Property> = await sb
     .from(TABLE_NAME)
     .delete()
     .eq(QUERY_ID, propertyId)
+    .eq(QUERY_USER_ID, userId)
     .select()
     .single();
 

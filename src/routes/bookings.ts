@@ -7,12 +7,14 @@ import {
 } from "../validators/bookingValidator.js";
 import {
   getBookingsByUserId,
+  getBookingRequests,
   createBooking,
   deleteBooking,
   getBookingsByPropertyId,
   updateBooking,
 } from "../database/bookings.js";
 import { requireAuth } from "../middleware/auth.js";
+import { bookingParamsValidator } from "../validators/propertyValidator.js";
 
 const FOREIGN_KEY_VIOLATION = "23503";
 
@@ -27,6 +29,23 @@ bookings.get("/mine", requireAuth, async (c) => {
   } catch (e) {
     console.warn("Error fetching user's bookings from SB database", e);
     return c.json({ error: "Failed to fetch bookings" }, 500);
+  }
+});
+
+bookings.get("/requests", requireAuth, async (c) => {
+  const user = c.get("user") as User;
+  const supabase = c.get("supabase");
+
+  try {
+    const bookings = await getBookingRequests(
+      supabase,
+      user.id,
+    );
+
+    return c.json(bookings);
+  } catch (error) {
+    console.warn("Error fetching booking requests", error);
+    return c.json({ error: "Failed to fetch requests" }, 500);
   }
 });
 
@@ -69,13 +88,14 @@ bookings.post("/properties/:propertyId", bookingValidator, requireAuth, async (c
 // Uppdatera en Booking om den finns och tillhör Propertyn
 bookings.patch(
   "/properties/:propertyId/:bookingId",
-  bookingOptionalValidator,
+  bookingOptionalValidator, requireAuth,
   async (c) => {
     const propertyId = c.req.param("propertyId");
     const bookingId = c.req.param("bookingId");
+    const user = c.get("user") as User
     const bookingBody = c.req.valid("json");
     try {
-      const booking = await updateBooking(propertyId, bookingId, bookingBody);
+      const booking = await updateBooking(propertyId, bookingId, user.id, bookingBody);
       return c.json(booking);
     } catch (e) {
       console.warn("Error updating booking in SB DB", e);
@@ -85,11 +105,12 @@ bookings.patch(
 );
 
 // Ta bort en Booking om den finns och tillhör Propertyn
-bookings.delete("/properties/:propertyId/:bookingId", async (c) => {
+bookings.delete("/properties/:propertyId/:bookingId", bookingParamsValidator, requireAuth, async (c) => {
   const propertyId = c.req.param("propertyId");
   const bookingId = c.req.param("bookingId");
+  const user = c.get("user") as User
   try {
-    await deleteBooking(propertyId, bookingId);
+    await deleteBooking(propertyId, bookingId, user.id);
     return c.json(null, 200);
   } catch (e) {
     console.warn("Error in deleting booking", e);

@@ -2,7 +2,7 @@ import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 
 import { sb } from "../lib/supabase.js";
 
-import type { Booking, NewBooking, BookingValidKey } from "../types/booking.js";
+import type { Booking, NewBooking, BookingValidKey, BookingWithProperty } from "../types/booking.js";
 import type { BasicSupabaseClient } from "../types/supabase.js";
 
 const TABLE_NAME = "bookings";
@@ -42,17 +42,39 @@ export async function getBookingsByPropertyId(
 const QUERY_USER_ID = "user_id";
 export async function getBookingsByUserId(
   userId: string,
-): Promise<Booking[]> {
+): Promise<BookingWithProperty[]> {
   const { error, data } = await sb
-    .from(TABLE_NAME)
-    .select(SELECT_QUERY)
-    .eq(QUERY_USER_ID, userId)
+    .from("bookings")
+    .select(
+      "booking_id, property_id, user_id, guest_name, guest_email, check_in, check_out, guests, status, created_at, properties(title, city, country, image_url, kind, price_per_night)",
+    )
+    .eq("user_id", userId)
     .order("check_in");
 
-  if (!error) {
-    return data as any as Booking[];
+  if (error) {
+    throw error;
   }
-  throw error;
+
+  return data;
+}
+
+export async function getBookingRequests(
+  supabase: BasicSupabaseClient,
+  ownerId: string,
+) {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(
+      `${SELECT_QUERY}, properties!inner(property_id, title)`,
+    )
+    .eq("properties.user_id", ownerId)
+    .order("check_in");
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function createBooking(
@@ -75,6 +97,7 @@ export async function createBooking(
 export async function updateBooking(
   propertyId: string,
   bookingId: string,
+  userId: string,
   booking: Partial<Booking>,
 ): Promise<Booking> {
   const { error, data }: PostgrestSingleResponse<Booking> = await sb
@@ -82,6 +105,7 @@ export async function updateBooking(
     .update(booking)
     .eq(QUERY_ID, bookingId)
     .eq(QUERY_PROPERTY_ID, propertyId)
+    .eq(QUERY_USER_ID, userId)
     .select(SELECT_QUERY)
     .single();
 
@@ -91,12 +115,14 @@ export async function updateBooking(
   throw error;
 }
 
-export async function deleteBooking(propertyId: string, bookingId: string) {
+export async function deleteBooking(propertyId: string, bookingId: string,
+  userId: string,) {
   const { error }: PostgrestSingleResponse<Booking> = await sb
     .from(TABLE_NAME)
     .delete()
     .eq(QUERY_ID, bookingId)
     .eq(QUERY_PROPERTY_ID, propertyId)
+    .eq(QUERY_USER_ID, userId)
     .select()
     .single();
 
