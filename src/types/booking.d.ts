@@ -7,3 +7,4 @@ type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 export type NewBooking = Omit<BookingInsert, "booking_id" | "created_at">
 
 export type BookingValidKey = keyof Booking;
+
