@@ -107,6 +107,7 @@ export async function getProperties(
 
 const QUERY_USER_ID = "user_id";
 export async function getPropertiesByUserId(
+  sb: BasicSupabaseClient,
   userId: string,
 ): Promise<Property[]> {
   const { error, data } = await sb

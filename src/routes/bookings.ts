@@ -22,9 +22,10 @@ const bookings = new Hono({ strict: false });
 
 bookings.get("/mine", requireAuth, async (c) => {
   const user = c.get("user") as User;
+  const supabase = c.get("supabase")
 
   try {
-    const bookings = await getBookingsByUserId(user.id);
+    const bookings = await getBookingsByUserId(supabase, user.id);
     return c.json(bookings);
   } catch (e) {
     console.warn("Error fetching user's bookings from SB database", e);
@@ -50,15 +51,15 @@ bookings.get("/requests", requireAuth, async (c) => {
 });
 
 // Lista alla bookings för en Property
-//http://localhost:3000/bookings/efkelefnaljekl-efae-11e12ed1-d1ed12d1d
 bookings.get("/properties/:propertyId", async (c) => {
+  const supabase = c.get("supabase")
   const propertyId = c.req.param("propertyId");
   try {
-    const bookings = await getBookingsByPropertyId(propertyId);
+    const bookings = await getBookingsByPropertyId(supabase, propertyId);
     return c.json(bookings);
   } catch (e) {
-    console.warn("Error in fetching bookings from SB database", e);
-    return c.json([]);
+    console.warn("Error fetching user's bookings from SB database", e);
+    return c.json({ error: "Failed to fetch bookings" }, 500);
   }
 });
 
@@ -92,14 +93,14 @@ bookings.patch(
   async (c) => {
     const propertyId = c.req.param("propertyId");
     const bookingId = c.req.param("bookingId");
-    const user = c.get("user") as User
+    const supabase = c.get("supabase")
     const bookingBody = c.req.valid("json");
     try {
-      const booking = await updateBooking(propertyId, bookingId, user.id, bookingBody);
+      const booking = await updateBooking(propertyId, bookingId, supabase, bookingBody);
       return c.json(booking);
     } catch (e) {
       console.warn("Error updating booking in SB DB", e);
-      return c.json(null, 404);
+      return c.json(null, 500);
     }
   },
 );
@@ -109,12 +110,13 @@ bookings.delete("/properties/:propertyId/:bookingId", bookingParamsValidator, re
   const propertyId = c.req.param("propertyId");
   const bookingId = c.req.param("bookingId");
   const user = c.get("user") as User
+  const supabase = c.get("supabase")
   try {
-    await deleteBooking(propertyId, bookingId, user.id);
+    await deleteBooking(propertyId, bookingId, supabase, user.id);
     return c.json(null, 200);
   } catch (e) {
     console.warn("Error in deleting booking", e);
-    return c.json(null, 404);
+    return c.json({ error: "Failed to delete booking" }, 500);
   }
 });
 

@@ -25,9 +25,11 @@ const properties = new Hono({ strict: false });
 
 properties.get("/mine", requireAuth, propertyQueryValidator, async (c) => {
   const user = c.get("user") as User;
+  const supabase = c.get("supabase")
 
   try {
     const properties = await getPropertiesByUserId(
+      supabase,
       user.id
     );
 
@@ -45,21 +47,13 @@ properties.get("/", propertyQueryValidator, async (c) => {
   try {
     const properties = await getProperties(sb, query);
     return c.json(properties);
-  } catch (error) {
-    console.warn("Error in fetching properties from SB database", error);
-    return c.json(
-      {
-        data: [],
-        count: 0,
-        offset: query.offset,
-        limit: query.limit
-      },
-      500
-    );
+  } catch (e) {
+    console.warn("Error fetching user's properties from SB database", e);
+    return c.json({ error: "Failed to fetch properties" }, 500);
   }
 });
 
-// GET: properties either properties/kind/villa/ | properties/kind/appartment/
+// Hämtar properties baserat på om de är "villa" eller "apartment"
 properties.get("/kind/:kind", propertyParamValidator, propertyQueryValidator, async (c) => {
   const query = c.req.valid("query")
   const kind = c.req.valid("param").kind;
@@ -67,22 +61,14 @@ properties.get("/kind/:kind", propertyParamValidator, propertyQueryValidator, as
   try {
     const properties = await getPropertiesByKind(sb, kind, query);
     return c.json(properties);
-  } catch (error) {
-    console.warn("Error in fetching properties from SB database", error);
-    return c.json(
-      {
-        data: [],
-        count: 0,
-        offset: query.offset,
-        limit: query.limit
-      },
-      500
-    );
+  } catch (e) {
+    console.warn("Error fetching user's properties from SB database", e);
+    return c.json({ error: "Failed to fetch properties" }, 500);
   }
 });
 
 
-// individuell GET hämta en Property om den finns baserat på ID annars null 404
+// individuell GET hämta en Property om den finns baserat på ID
 properties.get("/:id", async (c) => {
   const propertyId = c.req.param("id");
   const sb = c.get("supabase");
@@ -90,12 +76,11 @@ properties.get("/:id", async (c) => {
     const property = await getPropertyById(sb, propertyId);
     return c.json(property);
   } catch (e) {
-    console.warn("Error in fetching property from SB database", e);
-    return c.json(null, 404);
+    console.warn("Error fetching user's properties from SB database", e);
+    return c.json({ error: "Failed to fetch properties" }, 500);
   }
 });
 
-// "Skpande" av en Propery POST genom en JSON body använd Postman eller thunderclient för detta
 properties.post("/", requireAuth, propertyValidator, async (c) => {
   const propertyBody = c.req.valid("json");
   const sb = c.get("supabase");
@@ -112,8 +97,7 @@ properties.post("/", requireAuth, propertyValidator, async (c) => {
   }
 });
 
-// Extra: "Updaterande" av en Property PUT/PATCH (för patch kolla Partial types)
-// om den finns tänk en blandning mellan GET + POST
+// PATCH för att kunna ändra delar eller allt för en property
 properties.patch("/:id", requireAuth, propertyOptionalValidator, async (c) => {
   const propertyId = c.req.param("id");
   let propertyBody: Partial<Property> = c.req.valid("json");
@@ -124,12 +108,12 @@ properties.patch("/:id", requireAuth, propertyOptionalValidator, async (c) => {
     const property = await updatePropertyById(sb, propertyId, user.id, propertyBody);
     return c.json(property);
   } catch (e) {
-    console.log("Error updating property in SB DB", e);
-    return c.json(null, 404);
+    console.warn("Error fetching user's properties from SB database", e);
+    return c.json({ error: "Failed to fetch properties" }, 500);
   }
 });
 
-// Extra: "bortagning" av en Property DELETE om den finns tänk en GET som sedan tar bort 200/204
+// Delete för att radera från db
 properties.delete("/:id", requireAuth, propertyParamsValidator, async (c) => {
   const propertyId = c.req.param("id");
   const user = c.get("user") as User
@@ -139,7 +123,7 @@ properties.delete("/:id", requireAuth, propertyParamsValidator, async (c) => {
     return c.json(null, 200);
   } catch (e) {
     console.warn("Error in deleting property", e);
-    return c.json(null, 404);
+    return c.json({ error: "Failed to delete property" }, 500);
   }
 });
 export default properties;

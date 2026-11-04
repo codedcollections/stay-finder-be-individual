@@ -24,9 +24,10 @@ const QUERY_ID = "booking_id";
 const QUERY_PROPERTY_ID = "property_id";
 
 export async function getBookingsByPropertyId(
+  supabase: BasicSupabaseClient,
   propertyId: string,
 ): Promise<Booking[]> {
-  const { error, data } = await sb
+  const { error, data } = await supabase
     .from(TABLE_NAME)
     .select(SELECT_QUERY)
     .eq(QUERY_PROPERTY_ID, propertyId)
@@ -38,12 +39,12 @@ export async function getBookingsByPropertyId(
   throw error;
 }
 
-//get me info
 const QUERY_USER_ID = "user_id";
 export async function getBookingsByUserId(
+  supabase: BasicSupabaseClient,
   userId: string,
 ): Promise<BookingWithProperty[]> {
-  const { error, data } = await sb
+  const { error, data } = await supabase
     .from("bookings")
     .select(
       "booking_id, property_id, user_id, guest_name, guest_email, check_in, check_out, guests, status, created_at, properties(title, city, country, image_url, kind, price_per_night)",
@@ -97,7 +98,7 @@ export async function createBooking(
 export async function updateBooking(
   propertyId: string,
   bookingId: string,
-  userId: string,
+  sb: BasicSupabaseClient,
   booking: Partial<Booking>,
 ): Promise<Booking> {
   const { error, data }: PostgrestSingleResponse<Booking> = await sb
@@ -105,7 +106,6 @@ export async function updateBooking(
     .update(booking)
     .eq(QUERY_ID, bookingId)
     .eq(QUERY_PROPERTY_ID, propertyId)
-    .eq(QUERY_USER_ID, userId)
     .select(SELECT_QUERY)
     .single();
 
@@ -115,7 +115,7 @@ export async function updateBooking(
   throw error;
 }
 
-export async function deleteBooking(propertyId: string, bookingId: string,
+export async function deleteBooking(propertyId: string, bookingId: string, sb: BasicSupabaseClient,
   userId: string,) {
   const { error }: PostgrestSingleResponse<Booking> = await sb
     .from(TABLE_NAME)

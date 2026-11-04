@@ -11,7 +11,6 @@ const auth = new Hono({
 
 auth.get("/me", requireAuth, async (c) => {
   const sb = c.get("supabase");
-  console.log("Getting user", c.get("user"));
   try {
 
     const user = await getUser(sb);
@@ -51,7 +50,7 @@ auth.post("/register", authValidator, async (c) => {
       {
         message: e?.message,
       },
-      400,
+      500,
     );
   }
 });
@@ -77,7 +76,7 @@ auth.post("/login", authValidator, async (c) => {
       {
         message: e?.message,
       },
-      400,
+      500,
     );
   }
 });
@@ -90,7 +89,7 @@ auth.post("/logout", requireAuth, async (c) => {
 
     if (error) {
       console.warn("Error in signing out", error);
-      return c.json({ message: error.message }, 400);
+      return c.json({ message: error.message }, 500);
     }
 
     return c.json({ message: "Signed out" });
